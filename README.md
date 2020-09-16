@@ -1,9 +1,8 @@
 # Efficient querying from weighted binary codes
-This repository contains the C++ code for the query method proposed in our paper:
-"Efficient Querying from Weighted Binary Codes". Zhenyu Weng, Yuesheng Zhu. AAAI 2020(poster).
+An extension version of AAAI 2020: Efficient Querying from Weighted Binary Codes.
 
 ## Overview ##
-This method is a fast nearest neighbor search method for weighted binary codes based on the multi-index tables[1].
+This method is a fast nearest neighbor search method on binary codes in weighted Hamming space based on the multi-index tables[1].
 
 ## Building ##
 Requisites: C++
@@ -27,8 +26,7 @@ Then running FSWBC bit_number(optional) and find the time file in data\gist1m\it
 ## Reference ##
 [1] Norouzi, M.; Punjani, A.; and Fleet, D. J. 2014. Fast exact search in hamming space with multi-index hashing. IEEE Trans. on Pattern Anal. and Mach. Intell. 36(6):1107–1119.
 
-[2] Y. Gong, S. Lazebnik, A. Gordo, and F. Perronnin. 2013. Iterative quantization: A procrustean approach to learning binary codes for
-large-scale image retrieval. IEEE Trans. on Pattern Anal. and Mach. Intell., vol. 35, no. 12, pp. 2916–2929.
+[2] Y. Gong, S. Lazebnik, A. Gordo, and F. Perronnin. 2013. Iterative quantization: A procrustean approach to learning binary codes for large-scale image retrieval. IEEE Trans. on Pattern Anal. and Mach. Intell., vol. 35, no. 12, pp. 2916–2929.
 
 [3] A. Gordo, F. Perronnin, Y. Gong, and S. Lazebnik. 2014. Asymmetric distances for binary embeddings. IEEE Trans. on Pattern Anal. and Mach. Intell., vol. 36, no. 1, pp. 33–47.
 
@@ -41,6 +39,11 @@ Please cite:
   year={2020}
 }
 ```
+
+## Acknowledgement ##
+A part of the code is borrowed from [Mohammad Norouzi](https://github.com/norouzi/mih). Thanks for their wonderful works.
+
+
 
 ## Contact ##
 - Zhenyu Weng (Peking University)
