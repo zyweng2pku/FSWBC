@@ -22,7 +22,7 @@ using namespace std;
 typedef unsigned char byte;
 
 
-char sFileDir[] = "data/gist1m/lsh-e/\0";
+char sFileDir[] = "data/gist1m/itq-e/\0";
 
 //gist1m
 const int nNumData = 1000000; // the scale of database
@@ -962,202 +962,203 @@ void write_time_file(char sFileName[], double dTime)
 int main(int argc, char* argv[])
 {
 	int nByte = 32;
-	if (argc != 0) {
+	
+	if (argc >= 2) {
 		nByte = atoi(argv[1]);
 		printf("bit number: %d\n", nByte);
-	}
+	} else nByte = 32;
 	
 	
 	UINT64 ii;
-	for (int nBytes = 2; nBytes <= 2; nBytes *= 2) {
-		nBytes = nByte / 8;
-		int nBits = nBytes * 8;
-		int nSt = nBits / 16; // the range of the length of substrings, CIFAR-10: nbits / 8, GIST1M: nbits / 16
-		int nEd = nBits / 16;
-		for (int f = nSt; f >= nEd; f--) {
-			nChunksNum = f;
-			double* pWeight = (double*)malloc(nBits * 2 * nNumQuery * sizeof(double));
-			ii = nNumData;
-			ii = ii * nBytes * sizeof(byte);
-			byte* pDataBin = (byte*)malloc(ii);
-			byte* pQueryBin = (byte*)malloc(nNumQuery * nBytes * sizeof(byte));
-		
-			
-
-			sprintf(sFileName, "bit_weight%d\0", nBits);
-			strcpy(sFileFull, sFileDir);
-			strcat(sFileFull, sFileName);
-			read_weight_file(sFileFull, pWeight, nBits);
 	
-			sprintf(sFileName, "databin%d\0", nBits);
-			strcpy(sFileFull, sFileDir);
-			strcat(sFileFull, sFileName);
-			read_data_file(sFileFull, pDataBin, nBytes);
-	
-			sprintf(sFileName, "querybin%d\0", nBits);
-			strcpy(sFileFull, sFileDir);
-			strcat(sFileFull, sFileName);
-			read_query_file(sFileFull, pQueryBin, nBytes);
-		
-			printf("nNumData: %d\n", nNumData);
-			printf("nNumQueries: %d\n", nNumQuery);
-			printf("nBytes: %d\n", nBytes);
-		
-			// introducing the sparse_hashtable
-			counter = new bitarray;
-			counter->init(nNumData);
-
-			double dSortTime = 0;
-			double dMapTime = 0;
-			double dRecallTime = 0;
-			int B = nBits;
-			int m = nChunksNum;
-			int b = ceil((double)nBits/m);
- 
-			int D = ceil(nBits/2.0);		// assuming that B/2 is large enough radius to include all of the k nearest neighbors
-			int d = ceil((double)D*2/m);
-   
-			int mplus = B - m * (b-1);
-			printf("mpllus %d\n", mplus);
-			xornum = new UINT32 [d+2];
-			xornum[0] = 0;
-			for (int i=0; i<=d; i++)
-				xornum[i+1] = xornum[i] + choose(b, i);
-		
-			H = new SparseHashtable[m];
-			for (int i=0; i<mplus; i++)
-				H[i].init(b);
-			for (int i=mplus; i<m; i++)
-				H[i].init(b-1);		
-	
-			chunks = new UINT64[m];
-			int N = nNumData;
-			int dim1codes = nBits / 8;
-		
-			for (int k=0; k<m; k++) {
-				UINT8 * pcodes = (UINT8*) pDataBin;
-
-				for (UINT64 i=0; i<N; i++) {
-					split(chunks, pcodes, m, mplus, b);
-					H[k].count_insert(chunks[k], i);
-
-					if (i % (int)ceil((double)N/1000) == 0) {
-						printf("%.2f%%\r", (double)i/N * 100);
-						fflush(stdout);
-					}
-					pcodes += dim1codes;
-				}
-
-				pcodes = (UINT8*) pDataBin;
-				for (UINT64 i=0; i<N; i++) {
-					split(chunks, pcodes, m, mplus, b);
-
-					H[k].data_insert(chunks[k], i);
-
-					if (i % (int)ceil((double)N/1000) == 0) {
-						printf("%.2f%%\r", (double)i/N * 100);
-						fflush(stdout);
-					}
-					pcodes += dim1codes;
-				}
-			}		
-		
-		    //pause to record the memory
+	int nBytes = nByte / 8;
+	int nBits = nBytes * 8;
+	int nSt = nBits / 16; // the range of the length of substrings, CIFAR-10: nbits / 8, GIST1M: nbits / 16
+	int nEd = nBits / 16;
+	for (int f = nSt; f >= nEd; f--) {
+		nChunksNum = f;
+		double* pWeight = (double*)malloc(nBits * 2 * nNumQuery * sizeof(double));
+		ii = nNumData;
+		ii = ii * nBytes * sizeof(byte);
+		byte* pDataBin = (byte*)malloc(ii);
+		byte* pQueryBin = (byte*)malloc(nNumQuery * nBytes * sizeof(byte));
 	
 		
-			printf("size of table: %d\n", sizeof(H[0]));
-			for (int nNumTruth = nMinNumTruth; nNumTruth <= nMaxNumTruth; nNumTruth *= 10) { // return different numbers of data points
-				UINT32* pNumSuccess = (UINT32*)malloc(nNumQuery * nNumTruth * sizeof(UINT32));
-				UINT32* pCandidate = (UINT32*)malloc(nNumQuery * sizeof(UINT32));
-				UINT32* pCandidate1 = (UINT32*)malloc(nNumQuery * sizeof(UINT32));
-				UINT32* pBucket = (UINT32*)malloc(nNumQuery * sizeof(UINT32));
-				clock_t tSt, tEd;
-				
-				// sort the data
-				tSt = clock();
-				if (nBits % 8 == 0)	{
-					printf("begin query\n");
-					if (m == 1)
-						asym_search_otherbits_one(pDataBin, pQueryBin, pWeight, nNumData, nNumQuery, nBits, nNumTruth, pNumSuccess, H, counter, mplus, pCandidate, pBucket, pCandidate1);
-					else
-						asym_search_otherbits(pDataBin, pQueryBin, pWeight, nNumData, nNumQuery, nBits, nNumTruth, pNumSuccess, H, counter, mplus, pCandidate, pBucket, pCandidate1);
-				} else printf("Wrong bit number\n");
-				tEd = clock();
-				dSortTime = (double)(tEd - tSt) / CLOCKS_PER_SEC;
-				
-				printf("query time: %.5lf\n", dSortTime / nNumQuery);
-				
-				sprintf(sOutputDir, "%s%d/\0", sFileDir, nBits);
-				sprintf(sFileName, "MIWQ%d_%d_%d_%d_%d\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
-				strcpy(sFileFull, sOutputDir);
-				strcat(sFileFull, sFileName);
-				write_file(sFileFull, pNumSuccess, nNumTruth);
 
-				sprintf(sFileName, "time_MIWQ%d_%d_%d_%d_%d.txt\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
-				strcpy(sFileFull, sOutputDir);
-				strcat(sFileFull, sFileName);
-				write_time_file(sFileFull, dSortTime / nNumQuery);
-				
-				sprintf(sFileName, "candidate_MIWQ%d_%d_%d_%d_%d.txt\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
-				strcpy(sFileFull, sOutputDir);
-				strcat(sFileFull, sFileName);
-				write_candidate_file(sFileFull, pCandidate);
-				
-				sprintf(sFileName, "bucket_MIWQ%d_%d_%d_%d_%d.txt\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
-				strcpy(sFileFull, sOutputDir);
-				strcat(sFileFull, sFileName);
-				write_radius_file(sFileFull, pBucket);
+		sprintf(sFileName, "bit_weight%d\0", nBits);
+		strcpy(sFileFull, sFileDir);
+		strcat(sFileFull, sFileName);
+		read_weight_file(sFileFull, pWeight, nBits);
 
-				sprintf(sFileName, "ori_candidate_MIWQ%d_%d_%d_%d_%d.txt\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
-				strcpy(sFileFull, sOutputDir);
-				strcat(sFileFull, sFileName);
-				write_candidate_file(sFileFull, pCandidate1);
+		sprintf(sFileName, "databin%d\0", nBits);
+		strcpy(sFileFull, sFileDir);
+		strcat(sFileFull, sFileName);
+		read_data_file(sFileFull, pDataBin, nBytes);
 
-                double ave = 0;
-				for (int iQuery = 0; iQuery < nNumQuery; iQuery++) {
-					ave += pCandidate[iQuery];
+		sprintf(sFileName, "querybin%d\0", nBits);
+		strcpy(sFileFull, sFileDir);
+		strcat(sFileFull, sFileName);
+		read_query_file(sFileFull, pQueryBin, nBytes);
+	
+		printf("nNumData: %d\n", nNumData);
+		printf("nNumQueries: %d\n", nNumQuery);
+		printf("nBytes: %d\n", nBytes);
+	
+		// introducing the sparse_hashtable
+		counter = new bitarray;
+		counter->init(nNumData);
+
+		double dSortTime = 0;
+		double dMapTime = 0;
+		double dRecallTime = 0;
+		int B = nBits;
+		int m = nChunksNum;
+		int b = ceil((double)nBits/m);
+
+		int D = ceil(nBits/2.0);		// assuming that B/2 is large enough radius to include all of the k nearest neighbors
+		int d = ceil((double)D*2/m);
+
+		int mplus = B - m * (b-1);
+		printf("mpllus %d\n", mplus);
+		xornum = new UINT32 [d+2];
+		xornum[0] = 0;
+		for (int i=0; i<=d; i++)
+			xornum[i+1] = xornum[i] + choose(b, i);
+	
+		H = new SparseHashtable[m];
+		for (int i=0; i<mplus; i++)
+			H[i].init(b);
+		for (int i=mplus; i<m; i++)
+			H[i].init(b-1);		
+
+		chunks = new UINT64[m];
+		int N = nNumData;
+		int dim1codes = nBits / 8;
+	
+		for (int k=0; k<m; k++) {
+			UINT8 * pcodes = (UINT8*) pDataBin;
+
+			for (UINT64 i=0; i<N; i++) {
+				split(chunks, pcodes, m, mplus, b);
+				H[k].count_insert(chunks[k], i);
+
+				if (i % (int)ceil((double)N/1000) == 0) {
+					printf("%.2f%%\r", (double)i/N * 100);
+					fflush(stdout);
 				}
-				ave /= nNumQuery;
-				sprintf(sFileName, "ave_candidate_MIWQ%d_%d_%d_%d_%d.txt\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
-				strcpy(sFileFull, sOutputDir);
-				strcat(sFileFull, sFileName);
-				write_time_file(sFileFull, ave);
-
-				ave = 0;
-				for (int iQuery = 0; iQuery < nNumQuery; iQuery++) {
-					ave += pCandidate1[iQuery];
-				}
-				ave /= nNumQuery;
-				sprintf(sFileName, "ave_ori_candidate_MIWQ%d_%d_%d_%d_%d.txt\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
-				strcpy(sFileFull, sOutputDir);
-				strcat(sFileFull, sFileName);
-				write_time_file(sFileFull, ave);
-
-				ave = 0;
-				for (int iQuery = 0; iQuery < nNumQuery; iQuery++) {
-					ave += pBucket[iQuery];
-				}
-				ave /= nNumQuery;
-				sprintf(sFileName, "ave_bucket_MIWQ%d_%d_%d_%d_%d.txt\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
-				strcpy(sFileFull, sOutputDir);
-				strcat(sFileFull, sFileName);
-				write_time_file(sFileFull, ave);
-
-				
-				free(pNumSuccess);
-				free(pCandidate);
-				free(pCandidate1);
-				free(pBucket);
+				pcodes += dim1codes;
 			}
-			delete [] H;
-			delete [] xornum;
-			delete counter;
-			delete [] chunks;
-		
-			free(pDataBin);
-			free(pQueryBin);
-			free(pWeight);
+
+			pcodes = (UINT8*) pDataBin;
+			for (UINT64 i=0; i<N; i++) {
+				split(chunks, pcodes, m, mplus, b);
+
+				H[k].data_insert(chunks[k], i);
+
+				if (i % (int)ceil((double)N/1000) == 0) {
+					printf("%.2f%%\r", (double)i/N * 100);
+					fflush(stdout);
+				}
+				pcodes += dim1codes;
+			}
+		}		
+	
+		//pause to record the memory
+
+	
+		printf("size of table: %d\n", sizeof(H[0]));
+		for (int nNumTruth = nMinNumTruth; nNumTruth <= nMaxNumTruth; nNumTruth *= 10) { // return different numbers of data points
+			UINT32* pNumSuccess = (UINT32*)malloc(nNumQuery * nNumTruth * sizeof(UINT32));
+			UINT32* pCandidate = (UINT32*)malloc(nNumQuery * sizeof(UINT32));
+			UINT32* pCandidate1 = (UINT32*)malloc(nNumQuery * sizeof(UINT32));
+			UINT32* pBucket = (UINT32*)malloc(nNumQuery * sizeof(UINT32));
+			clock_t tSt, tEd;
+			
+			// sort the data
+			tSt = clock();
+			if (nBits % 8 == 0)	{
+				printf("begin query\n");
+				if (m == 1)
+					asym_search_otherbits_one(pDataBin, pQueryBin, pWeight, nNumData, nNumQuery, nBits, nNumTruth, pNumSuccess, H, counter, mplus, pCandidate, pBucket, pCandidate1);
+				else
+					asym_search_otherbits(pDataBin, pQueryBin, pWeight, nNumData, nNumQuery, nBits, nNumTruth, pNumSuccess, H, counter, mplus, pCandidate, pBucket, pCandidate1);
+			} else printf("Wrong bit number\n");
+			tEd = clock();
+			dSortTime = (double)(tEd - tSt) / CLOCKS_PER_SEC;
+			
+			printf("query time: %.5lf\n", dSortTime / nNumQuery);
+			
+			sprintf(sOutputDir, "%s%d/\0", sFileDir, nBits);
+			sprintf(sFileName, "MIWQ%d_%d_%d_%d_%d\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
+			strcpy(sFileFull, sOutputDir);
+			strcat(sFileFull, sFileName);
+			write_file(sFileFull, pNumSuccess, nNumTruth);
+
+			sprintf(sFileName, "time_MIWQ%d_%d_%d_%d_%d.txt\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
+			strcpy(sFileFull, sOutputDir);
+			strcat(sFileFull, sFileName);
+			write_time_file(sFileFull, dSortTime / nNumQuery);
+			
+			sprintf(sFileName, "candidate_MIWQ%d_%d_%d_%d_%d.txt\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
+			strcpy(sFileFull, sOutputDir);
+			strcat(sFileFull, sFileName);
+			write_candidate_file(sFileFull, pCandidate);
+			
+			sprintf(sFileName, "bucket_MIWQ%d_%d_%d_%d_%d.txt\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
+			strcpy(sFileFull, sOutputDir);
+			strcat(sFileFull, sFileName);
+			write_radius_file(sFileFull, pBucket);
+
+			sprintf(sFileName, "ori_candidate_MIWQ%d_%d_%d_%d_%d.txt\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
+			strcpy(sFileFull, sOutputDir);
+			strcat(sFileFull, sFileName);
+			write_candidate_file(sFileFull, pCandidate1);
+
+			double ave = 0;
+			for (int iQuery = 0; iQuery < nNumQuery; iQuery++) {
+				ave += pCandidate[iQuery];
+			}
+			ave /= nNumQuery;
+			sprintf(sFileName, "ave_candidate_MIWQ%d_%d_%d_%d_%d.txt\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
+			strcpy(sFileFull, sOutputDir);
+			strcat(sFileFull, sFileName);
+			write_time_file(sFileFull, ave);
+
+			ave = 0;
+			for (int iQuery = 0; iQuery < nNumQuery; iQuery++) {
+				ave += pCandidate1[iQuery];
+			}
+			ave /= nNumQuery;
+			sprintf(sFileName, "ave_ori_candidate_MIWQ%d_%d_%d_%d_%d.txt\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
+			strcpy(sFileFull, sOutputDir);
+			strcat(sFileFull, sFileName);
+			write_time_file(sFileFull, ave);
+
+			ave = 0;
+			for (int iQuery = 0; iQuery < nNumQuery; iQuery++) {
+				ave += pBucket[iQuery];
+			}
+			ave /= nNumQuery;
+			sprintf(sFileName, "ave_bucket_MIWQ%d_%d_%d_%d_%d.txt\0", nBits, nNumTruth, nChunksNum, nNumData, nNumQuery); 
+			strcpy(sFileFull, sOutputDir);
+			strcat(sFileFull, sFileName);
+			write_time_file(sFileFull, ave);
+
+			
+			free(pNumSuccess);
+			free(pCandidate);
+			free(pCandidate1);
+			free(pBucket);
 		}
+		delete [] H;
+		delete [] xornum;
+		delete counter;
+		delete [] chunks;
+	
+		free(pDataBin);
+		free(pQueryBin);
+		free(pWeight);
 	}
+
 	return 0;
 }
