@@ -2,7 +2,7 @@
 An extension version of AAAI 2020: Efficient Querying from Weighted Binary Codes.
 
 ## Overview ##
-This method is a fast nearest neighbor search method on binary codes in weighted Hamming space based on the multi-index tables[1].
+This method is a fast nearest neighbor search framework (FSWBC.cpp) on binary codes in weighted Hamming space based on the multi-index tables[1]. Also, we design a single multi-index hash table (FSWBC_single.cpp) to replace multi-index hash tables, which can reduce the practical storage cost. 
 
 ## Building ##
 Requisites: C++
@@ -22,6 +22,7 @@ $ g++ array32.o bucket_group.o sparse_hashtable.o FSWBC.o -o FSWBC
 ```
 Then running FSWBC bit_number(optional) and find the time file in data\gist1m\itq-e\32.
 
+And so does FSWBC_single.
 
 ## Reference ##
 [1] Norouzi, M.; Punjani, A.; and Fleet, D. J. 2014. Fast exact search in hamming space with multi-index hashing. IEEE Trans. on Pattern Anal. and Mach. Intell. 36(6):1107–1119.
