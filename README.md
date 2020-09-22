@@ -1,5 +1,5 @@
-# Efficient querying from weighted binary codes
-An extension version of AAAI 2020: Efficient Querying from Weighted Binary Codes.
+# Accelerating Search on Binary Codes in Weighted Hamming Space
+An extension version of AAAI 2020: Efficient Querying from Weighted Binary Codes [(arxiv link)](https://arxiv.org/abs/2009.08591).
 
 ## Overview ##
 This method is a fast nearest neighbor search framework (FSWBC.cpp) on binary codes in weighted Hamming space based on the multi-index tables[1]. Also, we design a single multi-index hash table (FSWBC_single.cpp) to replace multi-index hash tables, which can reduce the practical storage cost. 
